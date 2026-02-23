@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevGrade 🚀
 
-## Getting Started
+![DevGrade Preview](public/preview-placeholder.png) <!-- Update with actual screenshot later -->
 
-First, run the development server:
+DevGrade is a modern, responsive **GitHub Portfolio Analyzer** built with Next.js. It evaluates a developer's engineering health by analyzing repository data, commit velocity, code complexity, and security practices, ultimately generating a personalized roadmap using **Google's Gemini AI**.
 
+## ✨ Features
+
+- **Live GitHub Ingestion:** Fetches real-time profile, repository, and commit data utilizing the GitHub REST API.
+- **Advanced Scoring Heuristics:** Calculates customized scores for **Project Quality**, **Tech Diversity**, **Documentation**, and **Security**.
+- **AI Engineering Roadmap:** Dynamically generates actionable career and technical advice tailored to your specific repository metrics using **Gemini 2.5 Flash**.
+- **Visual Analytics:** Beautiful, interactive Radar Charts powered by Recharts.
+- **Sleek Aesthetic:** Minimalist dark-mode UI with smooth entry animations powered by Tailwind CSS and Framer Motion.
+- **Production Ready:** Fully tested with unit (Jest) and End-to-End (Playwright) testing suites.
+
+## 🛠️ Tech Stack
+
+- **Framework:** Next.js (App Router, React 19)
+- **Styling:** Tailwind CSS v4, `clsx`, `tailwind-merge`
+- **Animations & Icons:** Framer Motion, Lucide React
+- **Data Visualization:** Recharts
+- **AI Integration:** `@google/genai` (Gemini API)
+- **Testing:** Jest, React Testing Library, Playwright E2E
+
+## 🚀 Getting Started
+
+### 1. Requirements
+Ensure you have Node.js (v18+) installed.
+
+### 2. Environment Variables
+Create a `.env.local` file at the root of the project and add your API keys:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GITHUB_TOKEN=your_github_personal_access_token_here
+```
+*(Note: Generate your GitHub token from [Developer Settings](https://github.com/settings/tokens) with `public_repo` and `read:user` access. Generate your Gemini API Key from [Google AI Studio](https://aistudio.google.com/).)*
+
+### 3. Installation & Run
+
+Install the dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Start the development server:
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result!
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧪 Testing
 
-## Learn More
+Run unit & component tests (Jest):
+```bash
+npm run test
+```
 
-To learn more about Next.js, take a look at the following resources:
+Run End-to-End tests (Playwright):
+```bash
+npx playwright install # First time only
+npm run test:e2e
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+© 2024 DevGrade Engineering. All rights reserved.
