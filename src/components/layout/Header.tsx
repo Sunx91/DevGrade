@@ -3,7 +3,8 @@
 import { cn } from "@/lib/utils";
 import { BarChart3, Star } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 interface NavLink {
     label: string;
@@ -30,10 +31,20 @@ const defaultLightLinks: NavLink[] = [
     { label: "Docs", href: "/docs" },
 ];
 
-export default function Header({ variant = "light", navLinks, score }: HeaderProps) {
+function HeaderContent({ variant = "light", navLinks, score }: HeaderProps) {
     const pathname = usePathname();
-    const isDashboard = pathname?.includes('/dashboard') ?? false;
-    const links = navLinks ?? (isDashboard ? defaultDarkLinks : defaultLightLinks);
+    const searchParams = useSearchParams();
+    const user = searchParams?.get("user");
+
+    const isDashboard = (pathname?.includes('/dashboard') || pathname?.includes('/roadmap') || pathname?.includes('/insights')) ?? false;
+
+    // Append `?user=` to the links if available
+    const baseLinks = navLinks ?? (isDashboard ? defaultDarkLinks : defaultLightLinks);
+    const links = baseLinks.map(link => ({
+        ...link,
+        href: (user && isDashboard && !link.href.includes('?')) ? `${link.href}?user=${user}` : link.href
+    }));
+
     const isDark = variant === "dark";
 
     return (
@@ -136,5 +147,13 @@ export default function Header({ variant = "light", navLinks, score }: HeaderPro
                 </div>
             </div>
         </header>
+    );
+}
+
+export default function Header(props: HeaderProps) {
+    return (
+        <Suspense fallback={<header className="sticky top-0 z-50 w-full border-b h-14 bg-[#0d1117]/90" />}>
+            <HeaderContent {...props} />
+        </Suspense>
     );
 }

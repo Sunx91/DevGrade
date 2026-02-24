@@ -111,14 +111,28 @@ export async function POST(request: Request) {
 
         const overallScore = Math.round((qualityScore + techStack.score + documentationScore + securityScore) / 4);
 
+        // Extract top active/starred repositories
+        const topRepos = reposData
+            .filter((repo: any) => !repo.fork)
+            .sort((a: any, b: any) => b.stargazers_count - a.stargazers_count)
+            .slice(0, 3)
+            .map((repo: any) => ({
+                name: repo.name,
+                description: repo.description,
+                language: repo.language,
+                stars: repo.stargazers_count,
+            }));
+
         const roadmap = await generateRoadmap(
+            profileData.login || username,
             {
                 quality: { score: qualityScore },
                 techStack: techStack,
                 documentation: { score: documentationScore },
                 security: { score: securityScore },
             },
-            techStack.languages
+            techStack.languages,
+            topRepos
         );
 
         // Aggregate into a single response
