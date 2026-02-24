@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#0d1117] flex flex-col">
+    <div className="h-screen overflow-y-auto no-scrollbar bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/40 via-[#0d1117] to-[#0d1117] flex flex-col">
       {/* Header */}
       <Header variant="dark" />
 

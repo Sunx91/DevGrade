@@ -4,7 +4,9 @@ import { cn } from "@/lib/utils";
 import { BarChart3, Star } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { LogOut } from "lucide-react";
 
 interface NavLink {
     label: string;
@@ -20,21 +22,16 @@ interface HeaderProps {
 const defaultDarkLinks: NavLink[] = [
     { label: "Analysis", href: "/dashboard" },
     { label: "Roadmap", href: "/roadmap" },
-    { label: "Insights", href: "/insights" },
-    { label: "Portfolio Creator", href: "/portfolio" },
 ];
 
-const defaultLightLinks: NavLink[] = [
-    { label: "Features", href: "/#features" },
-    { label: "Benchmarks", href: "/#benchmarks" },
-    { label: "Enterprise", href: "/#enterprise" },
-    { label: "Docs", href: "/docs" },
-];
+const defaultLightLinks: NavLink[] = [];
 
 function HeaderContent({ variant = "light", navLinks, score }: HeaderProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const user = searchParams?.get("user");
+    const userParam = searchParams?.get("user");
+    const { user, logout } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     const isDashboard = (pathname?.includes('/dashboard') || pathname?.includes('/roadmap') || pathname?.includes('/insights')) ?? false;
 
@@ -42,7 +39,7 @@ function HeaderContent({ variant = "light", navLinks, score }: HeaderProps) {
     const baseLinks = navLinks ?? (isDashboard ? defaultDarkLinks : defaultLightLinks);
     const links = baseLinks.map(link => ({
         ...link,
-        href: (user && isDashboard && !link.href.includes('?')) ? `${link.href}?user=${user}` : link.href
+        href: (userParam && isDashboard && !link.href.includes('?')) ? `${link.href}?user=${userParam}` : link.href
     }));
 
     const isDark = variant === "dark";
@@ -107,18 +104,7 @@ function HeaderContent({ variant = "light", navLinks, score }: HeaderProps) {
 
                     {/* Right side */}
                     <div className="flex items-center gap-3">
-                        {isDark && score !== undefined && (
-                            <div className="hidden sm:flex items-center gap-2 text-right">
-                                <div>
-                                    <p className="text-[10px] uppercase tracking-widest text-gray-500 font-medium">
-                                        Current Score
-                                    </p>
-                                    <p className="text-blue-400 font-bold text-base leading-none">{score}</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {!isDashboard && (
+                        {!user ? (
                             <>
                                 <Link
                                     href="/login"
@@ -126,21 +112,41 @@ function HeaderContent({ variant = "light", navLinks, score }: HeaderProps) {
                                 >
                                     Log in
                                 </Link>
-                                <Link
+                                {/* <Link
                                     href="/dashboard"
                                     className={cn("text-sm font-semibold px-4 py-2 rounded-lg transition-colors", isDark ? "bg-white text-black hover:bg-gray-200" : "bg-gray-900 text-white hover:bg-gray-700")}
                                 >
                                     Get Started
-                                </Link>
+                                </Link> */}
                             </>
-                        )}
-
-                        {/* Avatar */}
-                        {isDashboard && (
-                            <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-blue-500/40 flex-shrink-0 cursor-pointer">
-                                <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                                    <span className="text-white text-xs font-bold">A</span>
-                                </div>
+                        ) : (
+                            <div className="flex items-center gap-3 relative">
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="w-8 h-8 rounded-full overflow-hidden border-2 border-blue-500/40 flex-shrink-0 cursor-pointer focus:outline-none"
+                                >
+                                    {user.photoURL ? (
+                                        <img src={user.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                            <span className="text-white text-xs font-bold">{user.email?.charAt(0).toUpperCase() || "A"}</span>
+                                        </div>
+                                    )}
+                                </button>
+                                {isMenuOpen && (
+                                    <div className="absolute right-0 top-12 w-48 bg-[#161b22] border border-[#30363d] rounded-xl shadow-2xl overflow-hidden py-1 z-50">
+                                        <div className="px-4 py-2 border-b border-[#30363d] mb-1">
+                                            <p className="text-sm font-medium text-white truncate">{user.displayName || user.email}</p>
+                                        </div>
+                                        <button
+                                            onClick={logout}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-[#21262d] flex items-center gap-2 transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Sign out
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

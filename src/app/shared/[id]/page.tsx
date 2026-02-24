@@ -9,43 +9,25 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { AlertTriangle, Share2, Check, Loader2 } from "lucide-react";
+import { getSharedResult, SharedResult, createSharedResult } from "@/lib/firebase/db";
 import { useAuth } from "@/contexts/AuthContext";
-import { saveSearchHistory, createSharedResult } from "@/lib/firebase/db";
 
-function DashboardContent() {
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const username = searchParams.get("user");
-
+function SharedContent({ id }: { id: string }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [data, setData] = useState<any>(null);
+    const [data, setData] = useState<SharedResult | null>(null);
     const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'copied'>('idle');
     const { user } = useAuth();
 
     useEffect(() => {
-        if (!username) {
-            router.push('/');
-            return;
-        }
-
-        const fetchData = async () => {
+        const fetchSharedData = async () => {
             try {
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ githubUrl: `https://github.com/${username}` })
-                });
-
-                const json = await res.json();
-                if (!res.ok) throw new Error(json.error || 'Failed to fetch data');
-                setData(json);
-
-                if (user) {
-                    saveSearchHistory(user.uid, json.username, json.overallScore);
+                const result = await getSharedResult(id);
+                if (!result) {
+                    throw new Error("Shared link not found or has expired.");
                 }
+                setData(result);
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -53,32 +35,17 @@ function DashboardContent() {
             }
         };
 
-        fetchData();
-        // Since we only want to fetch once per username query change, we intentionally omit `user` from dependencies
-    }, [username, router]);
-
-    if (loading) {
-        return <DashboardSkeleton />;
-    }
+        if (id) {
+            fetchSharedData();
+        }
+    }, [id]);
 
     const handleShare = async () => {
         if (!data) return;
         setShareStatus('sharing');
         try {
-            // Generate a random ID for the share
-            const shareId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-            // Format the roadmap data if it exists, otherwise empty array
-            const roadmapData = data.roadmap || [];
-
-            // Exclude roadmap from analysisData for a cleaner payload if you wish, or just save the huge object
-            const analysisData = { ...data };
-            delete analysisData.roadmap;
-
-            await createSharedResult(shareId, data.username, analysisData, roadmapData, user?.uid);
-
-            // Build the shareable URL
-            const shareUrl = `${window.location.origin}/shared/${shareId}`;
+            // Already sharing a shared link? Just copy the browser URL!
+            const shareUrl = window.location.href;
             await navigator.clipboard.writeText(shareUrl);
 
             setShareStatus('copied');
@@ -89,6 +56,10 @@ function DashboardContent() {
         }
     };
 
+    if (loading) {
+        return <DashboardSkeleton />;
+    }
+
     if (error || !data) {
         return (
             <div className="min-h-screen bg-[#0d1117] flex items-center justify-center p-4">
@@ -96,20 +67,25 @@ function DashboardContent() {
                     <AlertTriangle className="w-12 h-12 mb-4 text-red-500" />
                     <h2 className="text-xl font-bold mb-2">Analysis Failed</h2>
                     <p className="text-sm leading-relaxed mb-6">{error || 'Unknown error occurred'}</p>
-                    <button
-                        onClick={() => router.push('/')}
+                    <Link
+                        href="/"
                         className="bg-red-500/20 hover:bg-red-500/30 text-red-300 font-semibold px-6 py-2 rounded-xl transition-colors"
                     >
                         Return Home
-                    </button>
+                    </Link>
                 </div>
             </div>
         );
     }
+
+    // Reconstruct the data structure expected by the components
+    const displayData = data.analysisData;
+    const roadmap = data.roadmapData;
+
     return (
         <div className="min-h-screen bg-[#0d1117] flex flex-col">
             {/* Dark header */}
-            <Header variant="dark" score={data.overallScore} />
+            <Header variant="dark" score={displayData.overallScore} />
 
             {/* Main */}
             <motion.main
@@ -126,27 +102,33 @@ function DashboardContent() {
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-500/20 disabled:opacity-80 disabled:cursor-not-allowed"
                     >
                         {shareStatus === 'sharing' ? (
-                            <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+                            <><Loader2 className="w-4 h-4 animate-spin" /> Copying...</>
                         ) : shareStatus === 'copied' ? (
                             <><Check className="w-4 h-4" /> Link Copied!</>
                         ) : (
-                            <><Share2 className="w-4 h-4" /> Generate Public Link</>
+                            <><Share2 className="w-4 h-4" /> Copy Link</>
                         )}
                     </button>
+
+                    <div className="mt-2 text-right">
+                        <span className="text-xs text-blue-400 font-medium px-2 py-1 rounded-md bg-blue-900/30 border border-blue-500/20">
+                            Public Shared View
+                        </span>
+                    </div>
                 </div>
 
                 {/* Score ring section */}
                 <ScoreOverview
-                    score={data.overallScore}
+                    score={displayData.overallScore}
                     title="Engineering Readiness Score"
                     subtitle={`Based on the live analysis of their repositories, documentation standards, and overall tech stack diversity.`}
                 />
 
                 {/* Metrics grid */}
-                <MetricsGrid metrics={data.metrics} />
+                <MetricsGrid metrics={displayData.metrics} />
 
                 {/* AI Roadmap Generated by Gemini */}
-                <Roadmap roadmap={data.roadmap} />
+                <Roadmap roadmap={roadmap} />
 
                 {/* Stats bar */}
                 <div className="w-full max-w-4xl mx-auto px-4 mt-8 mb-4">
@@ -156,7 +138,7 @@ function DashboardContent() {
                                 Total Analyzed
                             </span>
                             <span className="text-white font-bold text-xl mt-0.5">
-                                {data.metrics.commits > 0 ? 'Data Available' : 'No Data'}
+                                {displayData.metrics.commits > 0 ? 'Data Available' : 'No Data'}
                             </span>
                         </div>
                         <div className="w-px h-10 bg-white/[0.06] hidden sm:block" />
@@ -165,7 +147,7 @@ function DashboardContent() {
                                 Commits (1yr)
                             </span>
                             <span className="text-white font-bold text-xl mt-0.5">
-                                {data.metrics.commits.toLocaleString()}
+                                {displayData.metrics.commits.toLocaleString()}
                             </span>
                         </div>
                         <div className="w-px h-10 bg-white/[0.06] hidden sm:block" />
@@ -174,15 +156,16 @@ function DashboardContent() {
                                 PRs Merged
                             </span>
                             <span className="text-white font-bold text-xl mt-0.5">
-                                {data.metrics.mergedPRs}
+                                {displayData.metrics.mergedPRs}
                             </span>
                         </div>
                         <div className="ml-auto">
                             <Link
-                                href="#"
+                                href={`https://github.com/${displayData.username}`}
+                                target="_blank"
                                 className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
                             >
-                                View Detailed Repository Breakdown →
+                                View GitHub Profile →
                             </Link>
                         </div>
                     </div>
@@ -194,14 +177,13 @@ function DashboardContent() {
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full overflow-hidden border border-blue-500/30">
-                            {/* In a real app we would use data.profile.avatar_url, but based on mock expectations sticking to the fallback initial */}
                             <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">{data.username.charAt(0).toUpperCase()}</span>
+                                <span className="text-white text-xs font-bold">{displayData.username.charAt(0).toUpperCase()}</span>
                             </div>
                         </div>
                         <div>
-                            <p className="text-white text-sm font-semibold">{data.username}</p>
-                            <p className="text-gray-500 text-xs">github.com/{data.username}</p>
+                            <p className="text-white text-sm font-semibold">{displayData.username}</p>
+                            <p className="text-gray-500 text-xs">github.com/{displayData.username}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-6">
@@ -218,10 +200,10 @@ function DashboardContent() {
     );
 }
 
-export default function DashboardPage() {
+export default function SharedPage({ params }: { params: { id: string } }) {
     return (
         <Suspense fallback={<DashboardSkeleton />}>
-            <DashboardContent />
+            <SharedContent id={params.id} />
         </Suspense>
     );
 }
