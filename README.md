@@ -1,6 +1,6 @@
 # DevGrade 🚀
 
-![DevGrade Preview](public/preview-placeholder.png) <!-- Update with actual screenshot later -->
+![DevGrade Preview](public/preview.png) <!-- Update with actual screenshot later -->
 
 DevGrade is a modern, responsive **GitHub Portfolio Analyzer** built with Next.js. It evaluates a developer's engineering health by analyzing repository data, commit velocity, code complexity, and security practices, ultimately generating a personalized roadmap using **Google's Gemini AI**.
 
@@ -8,10 +8,11 @@ DevGrade is a modern, responsive **GitHub Portfolio Analyzer** built with Next.j
 
 - **Live GitHub Ingestion:** Fetches real-time profile, repository, and commit data utilizing the GitHub REST API.
 - **Advanced Scoring Heuristics:** Calculates customized scores for **Project Quality**, **Tech Diversity**, **Documentation**, and **Security**.
-- **AI Engineering Roadmap:** Dynamically generates actionable career and technical advice tailored to your specific repository metrics using **Gemini 2.5 Flash**.
+- **User Authentication:** Supports seamless Email/Password and Google OAuth sign-in flows using **Firebase Authentication**.
+- **Session History & Sharing:** Automatically saves all analyses evaluated while logged in to **Firestore**, and allows generating public, immutable shareable snapshot links.
+- **AI Engineering Roadmap:** Dynamically generates actionable career and technical advice tailored to your specific repository metrics using **Google Gemini AI**.
 - **Visual Analytics:** Beautiful, interactive Radar Charts powered by Recharts.
-- **Sleek Aesthetic:** Minimalist dark-mode UI with smooth entry animations powered by Tailwind CSS and Framer Motion.
-- **Production Ready:** Fully tested with unit (Jest) and End-to-End (Playwright) testing suites.
+- **Sleek Aesthetic:** Minimalist dark-mode UI with a high-tech glowing radial background, smooth entry animations powered by Tailwind CSS and Framer Motion, and custom scrollbars.
 
 ## 🛠️ Tech Stack
 
@@ -19,8 +20,8 @@ DevGrade is a modern, responsive **GitHub Portfolio Analyzer** built with Next.j
 - **Styling:** Tailwind CSS v4, `clsx`, `tailwind-merge`
 - **Animations & Icons:** Framer Motion, Lucide React
 - **Data Visualization:** Recharts
+- **Database & Auth:** Firebase (Authentication, Firestore)
 - **AI Integration:** `@google/genai` (Gemini API)
-- **Testing:** Jest, React Testing Library, Playwright E2E
 
 ## 🚀 Getting Started
 
@@ -33,8 +34,15 @@ Create a `.env.local` file at the root of the project and add your API keys:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GITHUB_TOKEN=your_github_personal_access_token_here
+
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 ```
-*(Note: Generate your GitHub token from [Developer Settings](https://github.com/settings/tokens) with `public_repo` and `read:user` access. Generate your Gemini API Key from [Google AI Studio](https://aistudio.google.com/).)*
+*(Note: Generate your GitHub token from [Developer Settings](https://github.com/settings/tokens). Generate your Gemini API Key from [Google AI Studio](https://aistudio.google.com/). Fetch your Firebase config from the Firebase Console Project Settings.)*
 
 ### 3. Installation & Run
 
